@@ -1,0 +1,8 @@
+[package]
+name = "route-matcher"
+version = "0.1.0"
+edition = "2021"
+description = "Pure functions for matching URL paths against route patterns"
+license = "MIT"
+
+[dependencies]
