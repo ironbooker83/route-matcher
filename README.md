@@ -49,18 +49,44 @@ assert_eq!(match_path(&pattern, "/other"), None);
 Leading and trailing slashes are ignored on both patterns and paths, so
 `/users/:id`, `users/:id`, and `/users/:id/` all parse the same way.
 
+## Route tables
+
+`find_match` matches a path against an ordered list of `Route<T>` - a
+parsed pattern paired with whatever data the caller wants attached to it
+(a handler id, a closure, an enum variant). It's still a plain function
+over a slice, not a struct that owns the routes or dispatches to
+anything: the caller decides how to store the list and what to do with
+the matched `data`.
+
+Order is priority. `find_match` returns the first route in the slice
+whose pattern matches; it does not reorder by specificity. If two
+patterns could both match the same path (`/users/:id` and `/users/me`),
+put the one that should win first.
+
+```rust
+use route_matcher::{find_match, parse, Route};
+
+let routes = vec![
+    Route::new(parse("/users/me").unwrap(), "current_user"),
+    Route::new(parse("/users/:id").unwrap(), "get_user"),
+];
+let (handler, params) = find_match(&routes, "/users/me").unwrap();
+assert_eq!(*handler, "current_user");
+assert_eq!(params, Vec::new());
+```
+
 ## Design
 
 Every public function is pure: given the same arguments it returns the
 same result, and it never reads or writes anything outside its arguments
 and return value. There's no global route table and no mutable state to
-reset between tests. Building an actual router (matching a path against a
-list of patterns and picking the first or best match) is left to the
-caller, or to a later version of this crate - see the roadmap below.
+reset between tests - `find_match` takes the route list as an argument
+like everything else. Dispatching to whatever `data` the matched route
+carries is left to the caller.
 
 ## Roadmap
 
-- Route table: match a path against a prioritized list of patterns
 - Regex-free constraints on param segments (e.g. numeric-only `:id`)
 - Trailing-slash and case-sensitivity options
 - Benchmarks against a large route set
+- Doc examples runnable via `cargo test --doc`

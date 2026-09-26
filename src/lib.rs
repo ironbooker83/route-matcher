@@ -6,8 +6,10 @@
 //! test that shape independently of the matching logic itself.
 
 mod pattern;
+mod table;
 
 pub use pattern::{parse, split_path, PatternError, Segment};
+pub use table::{find_match, Route};
 
 /// Extracted parameter names and values, in the order they appear in the
 /// pattern. A `Vec` rather than a `HashMap` because route patterns rarely
